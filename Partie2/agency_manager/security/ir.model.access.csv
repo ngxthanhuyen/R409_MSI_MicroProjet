@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_agency_manager,access.agency.manager,model_agency_manager,,1,1,1,1
+access_agency_circuit,access.agency.circuit,model_agency_manager_circuit,,1,1,1,1
+access_agency_accompagnateur,access.agency.accompagnateur,model_agency_accompagnateur,,1,1,1,1
