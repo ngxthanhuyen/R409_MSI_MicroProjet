@@ -68,7 +68,6 @@ def generate_password(length=12):
     return ''.join(random.choice(chars) for _ in range(length))
 
 
-
 def create_user(uid, user_data):
     """Crée un utilisateur dans Odoo"""
     try:
@@ -130,3 +129,120 @@ def send_credentials_email(email, login, password):
         # Ne pas logger le mot de passe dans les logs réels
     })
 
+def get_group_id(uid, group_name):
+    """Récupère l'ID d'un groupe par son nom"""
+    try:
+        url = f"{ODOO_URL}/jsonrpc"
+        headers = {'Content-Type': 'application/json'}
+        search_data = {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+                "service": "object",
+                "method": "execute_kw",
+                "args": [ODOO_DB, uid, ODOO_PASSWORD, "res.groups", "search", [[("name", "=", group_name)]]]
+            },
+            "id": 2
+        }
+        response = requests.post(url, json=search_data, headers=headers).json()
+        result = response.get("result")
+        
+        if result:
+            group_id = result[0]
+            log_action("get_group_id", "success", {"group_name": group_name, "group_id": group_id})
+            return group_id
+        else:
+            log_action("get_group_id", "failed", {"group_name": group_name, "error": "Group not found"})
+            return None
+    except Exception as e:
+        log_action("get_group_id", "error", {"group_name": group_name, "error": str(e)})
+        return None
+    
+def assign_permissions(uid, user_id, group_id):
+    """Attribue des permissions à un utilisateur"""
+    try:
+        url = f"{ODOO_URL}/jsonrpc"
+        headers = {'Content-Type': 'application/json'}
+        assign_data = {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+                "service": "object",
+                "method": "execute_kw",
+                "args": [ODOO_DB, uid, ODOO_PASSWORD, "res.users", "write", [[user_id], {"groups_id": [(4, group_id)]}]]
+            },
+            "id": 4
+        }
+        response = requests.post(url, json=assign_data, headers=headers).json()
+        result = response.get("result")
+        
+        if result:
+            log_action("assign_permissions", "success", {
+                "user_id": user_id,
+                "group_id": group_id
+            })
+            return True
+        else:
+            log_action("assign_permissions", "failed", {
+                "user_id": user_id,
+                "group_id": group_id,
+                "error": response.get("error", "Unknown error")
+            })
+            return False
+    except Exception as e:
+        log_action("assign_permissions", "error", {
+            "user_id": user_id,
+            "group_id": group_id,
+            "error": str(e)
+        })
+        return False
+
+def import_accounts_from_csv(file_path):
+    """Fonction principale pour importer les utilisateurs depuis un fichier CSV"""
+    log_action("import_accounts_from_csv", "start", {"file": file_path})
+    
+    # Authentification
+    uid = authenticate()
+    if not uid:
+        print("Échec de l'authentification à Odoo")
+        return
+    
+    # Lecture du fichier CSV
+    try:
+        with open(file_path, newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            
+            for row in reader:
+                print(f"Traitement de l'utilisateur: {row['prenom']} {row['nom']}")
+                
+                # Création de l'utilisateur
+                user_id = create_user(uid, row)
+                
+                if user_id:
+                    # Attribution des permissions
+                    group_id = get_group_id(uid, row['droits'])
+                    
+                    if group_id:
+                        success = assign_permissions(uid, user_id, group_id)
+                        if success:
+                            print(f"Utilisateur {row['prenom']} {row['nom']} créé avec le rôle {row['droits']}")
+                        else:
+                            print(f"Échec de l'attribution des permissions pour {row['prenom']} {row['nom']}")
+                    else:
+                        print(f"Groupe {row['droits']} introuvable pour l'utilisateur {row['prenom']} {row['nom']}")
+                else:
+                    print(f"Échec de la création de l'utilisateur {row['prenom']} {row['nom']}")
+    
+    except FileNotFoundError:
+        error_msg = f"Fichier {file_path} introuvable"
+        print(error_msg)
+        log_action("import_accounts_from_csv", "error", {"error": error_msg})
+    except Exception as e:
+        error_msg = f"Erreur lors de la lecture du fichier CSV: {str(e)}"
+        print(error_msg)
+        log_action("import_accounts_from_csv", "error", {"error": error_msg})
+    
+    log_action("import_accounts_from_csv", "end", {"file": file_path})
+
+if __name__ == "__main__":
+    import_accounts_from_csv("utilisateurs.csv")
