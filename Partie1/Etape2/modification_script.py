@@ -73,7 +73,7 @@ def modify_user_groups(user_id, group_ids_to_add=None, group_ids_to_remove=None)
     # Supprimer tous les groupes de type utilisateur
     current_groups = [gid for gid in current_groups if gid not in user_type_group_ids]
 
-    # Ajouter le groupe utilisateur souhaité (par ex. Internal User = 1)
+    # Ajouter le groupe utilisateur souhaité 
     current_groups.append(1)
 
     # Mise à jour des groupes
@@ -83,3 +83,29 @@ def modify_user_groups(user_id, group_ids_to_add=None, group_ids_to_remove=None)
         [[user_id], {'groups_id': [(6, 0, current_groups)]}]
     )
     print(f"Groupes mis à jour pour l'utilisateur {user_id}.")
+
+# Supprime un utilisateur
+def delete_user(user_id):
+    success = models.execute_kw(db, uid, password, 'res.users', 'unlink', [[user_id]])
+    if success:
+        print(f"Utilisateur {user_id} supprimé.")
+    else:
+        print("Échec de la suppression.")
+
+
+# Exemple d'utilisation
+username = "jdupont"
+user_id = user_exists(username)
+
+if user_id:
+    # Modifier infos utilisateur
+    update_user_info(user_id, new_email="jean_dupont@example.com", new_password="jeandupont")
+
+    # Modifier les groupes
+    group_ids_to_add = [35, 44]      # ID des groupes à ajouter
+    group_ids_to_remove = [17, 18]   # ID des groupes à supprimer
+
+    modify_user_groups(user_id, group_ids_to_add, group_ids_to_remove)
+
+    # Supprimer l'utilisateur 
+    delete_user(user_id)
