@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Vue Formulaire -->
+    <record id="view_agency_form" model="ir.ui.view">
+        <field name="name">agency.manager.form</field>
+        <field name="model">agency.manager</field>
+        <field name="arch" type="xml">
+            <form string="Agence UberCircuit">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="siret"/>
+                        <field name="date_creation"/>
+                        <separator string="Propriétaire"/>
+                        <field name="owner_firstname"/>
+                        <field name="owner_lastname"/>
+                        <field name="owner_birthdate"/>
+                        <field name="owner_birthplace"/>
+                        <field name="capital"/>
+                        <field name="accompagnateurs"/>
+                        <field name="circuits"/>
+                    </group>
+
+                    <group string="Accompagnateurs détaillés">
+                        <field name="accompagnateurs_info">
+                            <tree editable="bottom">
+                                <field name="partner_id"/>
+                                <field name="skills"/>
+                                <field name="availability"/>
+                                <field name="hourly_rate"/>
+                            </tree>
+                        </field>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue Liste -->
+    <record id="view_agency_tree" model="ir.ui.view">
+        <field name="name">agency.manager.tree</field>
+        <field name="model">agency.manager</field>
+        <field name="arch" type="xml">
+            <tree string="Agences UberCircuit">
+                <field name="name"/>
+                <field name="siret"/>
+                <field name="date_creation"/>
+                <field name="capital"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_agency_manager" model="ir.actions.act_window">
+        <field name="name">Agences Individuelles</field>
+        <field name="res_model">agency.manager</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menus -->
+    <menuitem id="agency_menu_root" name="Agences" sequence="1"/>
+    <menuitem id="agency_menu" name="Gestion des Agences" parent="agency_menu_root"/>
+    <menuitem id="menu_agency_manager" name="Agences Individuelles" parent="agency_menu" action="action_agency_manager"/>
+
+</odoo>
+
