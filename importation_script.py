@@ -33,6 +33,35 @@ def log_action(action, status, details=None):
     }
     logging.info(json.dumps(log_entry))
 
+def authenticate():
+    """Authentification à l'API Odoo"""
+    try:
+        url = f"{ODOO_URL}/jsonrpc"
+        headers = {'Content-Type': 'application/json'}
+        auth_data = {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+                "service": "common",
+                "method": "authenticate",
+                "args": [ODOO_DB, ODOO_USER, ODOO_PASSWORD, {}]
+            },
+            "id": 1
+        }
+        response = requests.post(url, json=auth_data, headers=headers).json()
+        uid = response.get("result")
+        
+        if uid:
+            log_action("authenticate", "success", {"user": ODOO_USER})
+            return uid
+        else:
+            log_action("authenticate", "failed", {"error": "Authentication failed", "response": response})
+            return None
+    except Exception as e:
+        log_action("authenticate", "error", {"error": str(e)})
+        return None
+
+
 def generate_password(length=12):
     """Génère un mot de passe aléatoire"""
     chars = string.ascii_letters + string.digits + "!@#$%^&*"
