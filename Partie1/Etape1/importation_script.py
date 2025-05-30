@@ -61,12 +61,10 @@ def authenticate():
         log_action("authenticate", "error", {"error": str(e)})
         return None
 
-
 def generate_password(length=12):
     """Génère un mot de passe aléatoire"""
     chars = string.ascii_letters + string.digits + "!@#$%^&*"
     return ''.join(random.choice(chars) for _ in range(length))
-
 
 def create_user(uid, user_data):
     """Crée un utilisateur dans Odoo"""
